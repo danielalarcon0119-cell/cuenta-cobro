@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generador de Cuenta de Cobro</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg2: #111827;
+      --card: rgba(255, 255, 255, 0.08);
+      --line: rgba(255, 255, 255, 0.16);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #60a5fa;
+      --accent2: #34d399;
+      --danger: #f87171;
+      --shadow: 0 24px 60px rgba(0,0,0,.28);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(96,165,250,.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(52,211,153,.14), transparent 28%),
+        linear-gradient(180deg, #020617 0%, #0f172a 55%, #111827 100%);
+      color: var(--text);
+    }
+
+    .shell {
+      min-height: 100%;
+      padding: 28px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    .hero {
+      max-width: 1480px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 20px;
+      padding: 10px 4px 0;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3vw, 3.3rem);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.55;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      color: #cbd5e1;
+      font-size: .9rem;
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 6px rgba(96,165,250,.14);
+    }
+
+    .layout {
+      max-width: 1480px;
+      width: 100%;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: .02em;
+    }
+
+    .panel-body { padding: 22px; }
+    .form-grid { display: grid; gap: 16px; }
+
+    .section {
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      background: rgba(15,23,42,.34);
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-size: .95rem;
+      color: #dbeafe;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 6px rgba(96,165,250,.12);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1.1fr .9fr .9fr; gap: 12px; }
+
+    label {
+      display: block;
+      margin: 0 0 7px;
+      font-size: .84rem;
+      color: #cbd5e1;
+      letter-spacing: .01em;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(2,6,23,.52);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 13px 14px;
+      font-size: .96rem;
+      outline: none;
+      transition: .18s ease;
+    }
+
+    input::placeholder { color: #94a3b8; }
+    input:focus, select:focus {
+      border-color: rgba(96,165,250,.8);
+      box-shadow: 0 0 0 4px rgba(96,165,250,.12);
+      transform: translateY(-1px);
+    }
+
+    .helper {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: .8rem;
+      line-height: 1.4;
+    }
+
+    .toggle-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .toggle-pill {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-pill input { width: auto; }
+
+    .account-card {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+    }
+
+    .account-card.hidden { display: none; }
+
+    .signature-wrap {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .signature-box {
+      padding: 14px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px;
+    }
+
+    .signature-canvas {
+      width: 100%;
+      height: 180px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(249,250,251,.96));
+      border: 1px solid rgba(15,23,42,.18);
+      display: block;
+      touch-action: none;
+    }
+
+    .paper-preview-wrap {
+      background: #ffffff;
+      color: #111827;
+      border-radius: 24px;
+      box-shadow: inset 0 0 0 1px rgba(17,24,39,.08), 0 20px 48px rgba(0,0,0,.24);
+      min-height: 920px;
+      padding: 36px 40px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .paper-top {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .paper-top .big-title {
+      font-size: 1.55rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      margin: 8px 0 0;
+      text-transform: uppercase;
+    }
+
+    .paper-line {
+      margin: 12px 0;
+      font-size: 1rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    .paper-strong {
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .paper-body {
+      margin-top: 18px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.03rem;
+      line-height: 1.9;
+      white-space: pre-wrap;
+    }
+
+    .paper-sign {
+      margin-top: 34px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      justify-items: start;
+      min-height: 180px;
+    }
+
+    .paper-signature-img {
+      max-width: 240px;
+      max-height: 120px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .paper-footer {
+      margin-top: 8px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1rem;
+      line-height: 1.8;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      font-size: .95rem;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .btn-primary {
+      color: #03111f;
+      background: linear-gradient(135deg, #93c5fd, #34d399);
+      box-shadow: 0 14px 30px rgba(52,211,153,.18);
+    }
+
+    .btn-secondary {
+      color: var(--text);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .btn-danger {
+      color: #fecaca;
+      background: rgba(248,113,113,.12);
+      border: 1px solid rgba(248,113,113,.25);
+    }
+
+    .error {
+      color: #fecaca;
+      background: rgba(248,113,113,.1);
+      border: 1px solid rgba(248,113,113,.22);
+      padding: 10px 12px;
+      border-radius: 12px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    @media (max-width: 1240px) {
+      .layout { grid-template-columns: 1fr; }
+      .paper-preview-wrap { position: static; min-height: auto; }
+    }
+
+    @media (max-width: 820px) {
+      .shell { padding: 16px; }
+      .hero { flex-direction: column; align-items: start; }
+      .grid-2, .grid-3, .signature-wrap { grid-template-columns: 1fr; }
+      .panel-body { padding: 16px; }
+      .section { padding: 14px; }
+      .paper-preview-wrap { padding: 24px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <div class="badge"><span class="dot"></span> Generador de cuenta de cobro profesional</div>
+        <h1>Cuenta de cobro lista para empresa, firma y PDF</h1>
+        <p>
+          Llena los datos una sola vez, agrega firma dibujada o en imagen, y descarga un PDF con la estructura del formato que me compartiste.
+        </p>
+      </div>
+      <div class="badge">Diseño limpio · PDF automático · Firma doble</div>
+    </header>
+
+    <main class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Formulario</h2>
+          <span class="subtle">Los campos marcados con * son obligatorios</span>
+        </div>
+        <div class="panel-body">
+          <form id="invoiceForm" class="form-grid">
+            <div class="section">
+              <h3 class="section-title">Datos de la empresa</h3>
+              <div class="grid-2">
+                <div>
+                  <label for="empresa">Empresa *</label>
+                  <input id="empresa" type="text" placeholder="Empresa a la que va dirigida" required />
+                </div>
+                <div>
+                  <label for="nit">NIT *</label>
+                  <input id="nit" type="text" placeholder="NIT de la empresa" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3 class="section-title">Datos personales del cobrador</h3>
+              <div class="grid-3">
+                <div>
+                  <label for="nombre">Nombre completo *</label>
+                  <input id="nombre" type="text" placeholder="Tu nombre completo" required />
+                </div>
+                <div>
+                  <label for="tipoDoc">Tipo de documento *</label>
+                  <select id="tipoDoc" required>
+                    <option value="C.C.">C.C.</option>
+                    <option value="C.E.">C.E.</option>
+                    <option value="T.I.">T.I.</option>
+                    <option value="Pasaporte">Pasaporte</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="docNumero">Número de documento *</label>
+                  <input id="docNumero" type="text" placeholder="Número de documento" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3 class="section-title">Valor y recorrido</h3>
+              <div class="grid-3">
+                <div>
+                  <label for="valor">Valor en número *</label>
+                  <input id="valor" type="number" min="0" step="1" placeholder="Valor a cobrar" required />
+                  <div class="helper" id="valorEnLetras">Se mostrará en letras automáticamente.</div>
+                </div>
+                <div>
+                  <label for="origen">Punto de partida *</label>
+                  <input id="origen" type="text" placeholder="Ej. CIUDAD" required />
+                </div>
+                <div>
+                  <label for="destino">Destino *</label>
+                  <input id="destino" type="text" placeholder="Ej. DESTINO" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3 class="section-title">Datos de consignación</h3>
+              <div class="toggle-row">
+                <label class="toggle-pill"><input type="radio" name="modoCuenta" value="1" checked /> Una cuenta</label>
+                <label class="toggle-pill"><input type="radio" name="modoCuenta" value="2" /> Dos cuentas</label>
+              </div>
+
+              <div class="account-card">
+                <div class="grid-3">
+                  <div>
+                    <label for="banco1">Banco / entidad 1 *</label>
+                    <input id="banco1" type="text" placeholder="Banco" required />
+                  </div>
+                  <div>
+                    <label for="cuenta1">Número de cuenta 1 *</label>
+                    <input id="cuenta1" type="text" placeholder="Número de cuenta" required />
+                  </div>
+                  <div>
+                    <label for="titular1">Titular 1 *</label>
+                    <input id="titular1" type="text" placeholder="Tu nombre completo" required />
+                  </div>
+                </div>
+              </div>
+
+              <div id="segundaCuenta" class="account-card hidden">
+                <div class="grid-3">
+                  <div>
+                    <label for="banco2">Banco / entidad 2 *</label>
+                    <input id="banco2" type="text" placeholder="Banco" />
+                  </div>
+                  <div>
+                    <label for="cuenta2">Número de cuenta 2 *</label>
+                    <input id="cuenta2" type="text" placeholder="Número de cuenta" />
+                  </div>
+                  <div>
+                    <label for="titular2">Titular 2 *</label>
+                    <input id="titular2" type="text" placeholder="Tu nombre completo" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3 class="section-title">Fecha y lugar de expedición</h3>
+              <div class="grid-2">
+                <div>
+                  <label for="ciudad">Ciudad *</label>
+                  <input id="ciudad" type="text" placeholder="Ej. CIUDAD" required />
+                </div>
+                <div>
+                  <label for="fecha">Fecha *</label>
+                  <input id="fecha" type="date" required />
+                  <div class="helper">Puedes dejar la fecha de hoy o cambiarla manualmente.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3 class="section-title">Firma</h3>
+              <div class="signature-wrap">
+                <div class="signature-box">
+                  <label for="firmaArchivo">Subir firma en imagen (opcional)</label>
+                  <input id="firmaArchivo" type="file" accept="image/*" />
+                  <div class="helper">Si subes una firma, esa tendrá prioridad. Si no, se usará la dibujada aquí abajo.</div>
+                  <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="button" class="btn-secondary" id="btnBorrarArchivo">Quitar imagen</button>
+                  </div>
+                </div>
+
+                <div class="signature-box">
+                  <label>Firmar con mouse o dedo</label>
+                  <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+                  <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="button" class="btn-secondary" id="btnLimpiarFirma">Limpiar firma</button>
+                  </div>
+                </div>
+              </div>
+              <div class="helper" style="margin-top:12px;">La firma se insertará al PDF y debajo aparecerán el nombre y la cédula del firmante.</div>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn-primary">Generar PDF</button>
+              <button type="button" id="btnPreview" class="btn-secondary">Actualizar vista previa</button>
+              <button type="button" id="btnReset" class="btn-danger">Limpiar todo</button>
+            </div>
+
+            <div class="error" id="errorBox"></div>
+          </form>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-head">
+          <h2>Vista previa del documento</h2>
+          <span class="subtle">Ajustada para parecerse al formato</span>
+        </div>
+        <div class="panel-body">
+          <div class="paper-preview-wrap" id="previewPaper">
+            <div class="paper-top">
+              <p class="big-title">CUENTA DE COBRO</p>
+            </div>
+
+            <div class="paper-line paper-strong" id="pvEmpresa">EMPRESA A LA QUE VA DIRIGIDA</div>
+            <div class="paper-line" id="pvNit">NIT: NIT DE LA EMPRESA</div>
+            <div class="paper-line paper-strong">DEBE A:</div>
+            <div class="paper-line paper-strong" id="pvNombre">EJ. NOMBRE COMPLETO</div>
+            <div class="paper-line" id="pvDoc">C.C. No. EJ. NÚMERO DE DOCUMENTO</div>
+
+            <div class="paper-body" id="pvCuerpo">
+              La suma de EJ. VALOR EN LETRAS PESOS ($0) M/te que corresponden a transporte de carga de EJ. ORIGEN – EJ. DESTINO.
+              Consignar a la cuenta de ahorros - EJ. BANCO 1 Nº EJ. NÚMERO DE CUENTA 1 o EJ. BANCO 2 Nº EJ. NÚMERO DE CUENTA 2 a nombre del señor EJ. TITULAR 2 y/o a nombre del señor EJ. TITULAR 1.
+              Expedida en EJ. CIUDAD, el día EJ. FECHA.
+            </div>
+
+            <div class="paper-sign">
+              <div style="font-family: Georgia, 'Times New Roman', serif; font-size: 1rem;">Atentamente,</div>
+              <img id="pvFirma" class="paper-signature-img" alt="Firma" style="display:none;" />
+              <div id="pvFirmaPlaceholder" class="subtle">Aquí se verá la firma seleccionada o dibujada.</div>
+              <div class="paper-footer" id="pvFirmaDatos">
+                EJ. NOMBRE COMPLETO<br>
+                C.C. No. EJ. NÚMERO DE DOCUMENTO
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.2.0/dist/signature_pad.umd.min.js"></script>
+  <script>
+    const { jsPDF } = window.jspdf;
+
+    const form = document.getElementById('invoiceForm');
+    const errorBox = document.getElementById('errorBox');
+
+    const fields = {
+      empresa: document.getElementById('empresa'),
+      nit: document.getElementById('nit'),
+      nombre: document.getElementById('nombre'),
+      tipoDoc: document.getElementById('tipoDoc'),
+      docNumero: document.getElementById('docNumero'),
+      valor: document.getElementById('valor'),
+      origen: document.getElementById('origen'),
+      destino: document.getElementById('destino'),
+      banco1: document.getElementById('banco1'),
+      cuenta1: document.getElementById('cuenta1'),
+      titular1: document.getElementById('titular1'),
+      banco2: document.getElementById('banco2'),
+      cuenta2: document.getElementById('cuenta2'),
+      titular2: document.getElementById('titular2'),
+      ciudad: document.getElementById('ciudad'),
+      fecha: document.getElementById('fecha'),
+      firmaArchivo: document.getElementById('firmaArchivo')
+    };
+
+    const preview = {
+      empresa: document.getElementById('pvEmpresa'),
+      nit: document.getElementById('pvNit'),
+      nombre: document.getElementById('pvNombre'),
+      doc: document.getElementById('pvDoc'),
+      cuerpo: document.getElementById('pvCuerpo'),
+      firmaImg: document.getElementById('pvFirma'),
+      firmaPlaceholder: document.getElementById('pvFirmaPlaceholder'),
+      firmaDatos: document.getElementById('pvFirmaDatos'),
+      valorLetras: document.getElementById('valorEnLetras')
+    };
+
+    const modoCuentaRadios = [...document.querySelectorAll('input[name="modoCuenta"]')];
+    const segundaCuenta = document.getElementById('segundaCuenta');
+    const btnLimpiarFirma = document.getElementById('btnLimpiarFirma');
+    const btnBorrarArchivo = document.getElementById('btnBorrarArchivo');
+    const btnReset = document.getElementById('btnReset');
+    const btnPreview = document.getElementById('btnPreview');
+
+    const signatureCanvas = document.getElementById('signatureCanvas');
+    const signaturePad = new SignaturePad(signatureCanvas, {
+      backgroundColor: 'rgb(255,255,255)',
+      penColor: 'rgb(17,24,39)'
+    });
+
+    let uploadedSignature = null; // { dataUrl, mime }
+
+    function fitCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      const rect = signatureCanvas.getBoundingClientRect();
+      signatureCanvas.width = rect.width * ratio;
+      signatureCanvas.height = rect.height * ratio;
+      const ctx = signatureCanvas.getContext('2d');
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      signaturePad.clear();
+    }
+
+    function currentMode() {
+      return [...modoCuentaRadios].find(r => r.checked)?.value || '1';
+    }
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.style.display = 'block';
+    }
+
+    function clearError() {
+      errorBox.textContent = '';
+      errorBox.style.display = 'none';
+    }
+
+    function normalizeText(value) {
+      return (value || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function toTitleCase(text) {
+      return normalizeText(text)
+        .toLowerCase()
+        .split(' ')
+        .map(word => word ? word[0].toUpperCase() + word.slice(1) : '')
+        .join(' ');
+    }
+
+    function formatMoney(number) {
+      const n = Number(number || 0);
+      return new Intl.NumberFormat('es-CO').format(n);
+    }
+
+    function convertUnits(n, masculine = true) {
+      const units = ['CERO', masculine ? 'UN' : 'UNA', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+      return units[n];
+    }
+
+    function convertHundreds(n, masculine = true) {
+      n = Number(n);
+      if (n === 0) return '';
+      if (n < 10) return convertUnits(n, masculine);
+      if (n < 20) {
+        const teens = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+        return teens[n - 10];
+      }
+      if (n < 30) {
+        const twenties = ['VEINTE', masculine ? 'VEINTIÚN' : 'VEINTIUNA', 'VEINTIDÓS', 'VEINTITRÉS', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISÉIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
+        return twenties[n - 20];
+      }
+
+      const tensNames = {
+        3: 'TREINTA',
+        4: 'CUARENTA',
+        5: 'CINCUENTA',
+        6: 'SESENTA',
+        7: 'SETENTA',
+        8: 'OCHENTA',
+        9: 'NOVENTA'
+      };
+
+      const hundredsNames = {
+        1: n === 100 ? 'CIEN' : 'CIENTO',
+        2: 'DOSCIENTOS',
+        3: 'TRESCIENTOS',
+        4: 'CUATROCIENTOS',
+        5: 'QUINIENTOS',
+        6: 'SEISCIENTOS',
+        7: 'SETECIENTOS',
+        8: 'OCHOCIENTOS',
+        9: 'NOVECIENTOS'
+      };
+
+      const hundreds = Math.floor(n / 100);
+      const tens = Math.floor((n % 100) / 10);
+      const units = n % 10;
+      const parts = [];
+
+      if (hundreds) parts.push(hundredsNames[hundreds]);
+      if (tens) {
+        if (n % 100 === 0) {
+          // nothing
+        } else if (n % 100 < 30) {
+          parts.push(convertHundreds(n % 100, masculine));
+          return parts.join(' ');
+        } else {
+          parts.push(tensNames[tens]);
+          if (units) parts.push(masculine ? 'Y UN' : 'Y UNA');
+        }
+      } else if (units) {
+        parts.push(convertUnits(units, masculine));
+      }
+
+      if (tens >= 3 && units) {
+        parts[parts.length - 1] = `${tensNames[tens]} Y ${units === 1 ? (masculine ? 'UN' : 'UNA') : convertUnits(units, masculine)}`;
+      }
+
+      return parts.join(' ').trim();
+    }
+
+    function numberToSpanishWords(number, masculine = true) {
+      const n = Number(number);
+      if (!Number.isFinite(n) || n < 0) return '';
+      if (n === 0) return 'CERO';
+
+      const millions = Math.floor(n / 1_000_000);
+      const thousands = Math.floor((n % 1_000_000) / 1000);
+      const hundreds = n % 1000;
+      const parts = [];
+
+      if (millions) {
+        if (millions === 1) parts.push('UN MILLÓN');
+        else parts.push(`${convertGroup(millions, masculine)} MILLONES`);
+      }
+
+      if (thousands) {
+        if (thousands === 1) parts.push('MIL');
+        else parts.push(`${convertGroup(thousands, masculine)} MIL`);
+      }
+
+      if (hundreds) {
+        parts.push(convertGroup(hundreds, masculine));
+      }
+
+      return parts.join(' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function convertGroup(n, masculine = true) {
+      n = Number(n);
+      if (n === 0) return '';
+      if (n < 1000) return convertHundreds(n, masculine);
+      return numberToSpanishWords(n, masculine);
+    }
+
+    function moneyToWords(value) {
+      const n = Math.trunc(Number(value || 0));
+      if (!n) return 'CERO';
+      return numberToSpanishWords(n, true).replace(/\s+/g, ' ').trim();
+    }
+
+    function formatSpanishDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr + 'T00:00:00');
+      return new Intl.DateTimeFormat('es-CO', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }).format(d);
+    }
+
+    function getCuentaTexto() {
+      const mode = currentMode();
+      const banco1 = normalizeText(fields.banco1.value) || 'EJ. BANCO 1';
+      const cuenta1 = normalizeText(fields.cuenta1.value) || 'EJ. NÚMERO DE CUENTA 1';
+      const titular1 = normalizeText(fields.titular1.value) || 'EJ. TITULAR 1';
+      if (mode === '1') {
+        return `Consignar a la cuenta de ahorros - ${banco1} Nº ${cuenta1} a nombre del señor ${titular1}.`;
+      }
+      const banco2 = normalizeText(fields.banco2.value) || 'EJ. BANCO 2';
+      const cuenta2 = normalizeText(fields.cuenta2.value) || 'EJ. NÚMERO DE CUENTA 2';
+      const titular2 = normalizeText(fields.titular2.value) || 'EJ. TITULAR 2';
+      const secondOwnerText = titular2 ? ` a nombre del señor ${titular2}` : '';
+      return `Consignar a la cuenta de ahorros - ${banco1} Nº ${cuenta1} o ${banco2} Nº ${cuenta2}${secondOwnerText || ''} y/o a nombre del señor ${titular1}.`;
+    }
+
+    function buildBodyText() {
+      const valorNum = Math.trunc(Number(fields.valor.value || 0));
+      const valorNumFmt = formatMoney(valorNum);
+      const valorLetras = moneyToWords(valorNum);
+      const origen = toTitleCase(fields.origen.value) || 'EJ. ORIGEN';
+      const destino = toTitleCase(fields.destino.value) || 'EJ. DESTINO';
+      const ciudad = toTitleCase(fields.ciudad.value) || 'EJ. CIUDAD';
+      const fechaTexto = formatSpanishDate(fields.fecha.value) || 'EJ. FECHA';
+      const cuentaTexto = getCuentaTexto();
+
+      return {
+        valorNumFmt,
+        valorLetras,
+        line1: `La suma de ${valorLetras} PESOS ($${valorNumFmt}) M/te que corresponden a transporte de carga de ${origen} – ${destino}.`,
+        line2: cuentaTexto,
+        line3: `Expedida en ${ciudad}, el día ${fechaTexto}.`
+      };
+    }
+
+    function updateSecondAccountVisibility() {
+      const mode = currentMode();
+      const show = mode === '2';
+      segundaCuenta.classList.toggle('hidden', !show);
+
+      ['banco2', 'cuenta2', 'titular2'].forEach(id => {
+        fields[id].required = show;
+      });
+    }
+
+    function setPreviewSignature(dataUrl) {
+      if (dataUrl) {
+        preview.firmaImg.src = dataUrl;
+        preview.firmaImg.style.display = 'block';
+        preview.firmaPlaceholder.style.display = 'none';
+      } else {
+        preview.firmaImg.removeAttribute('src');
+        preview.firmaImg.style.display = 'none';
+        preview.firmaPlaceholder.style.display = 'block';
+      }
+    }
+
+    function updatePreview() {
+      const empresa = normalizeText(fields.empresa.value) || 'EMPRESA A LA QUE VA DIRIGIDA';
+      const nit = normalizeText(fields.nit.value) || 'NIT DE LA EMPRESA';
+      const nombre = normalizeText(fields.nombre.value) || 'EJ. NOMBRE COMPLETO';
+      const tipoDoc = fields.tipoDoc.value || 'C.C.';
+      const docNumero = normalizeText(fields.docNumero.value) || 'EJ. NÚMERO DE DOCUMENTO';
+      const { valorLetras, valorNumFmt, line1, line2, line3 } = buildBodyText();
+
+      preview.empresa.textContent = empresa.toUpperCase();
+      preview.nit.textContent = `NIT: ${nit}`;
+      preview.nombre.textContent = nombre.toUpperCase();
+      preview.doc.textContent = `${tipoDoc} No. ${docNumero}`;
+      preview.cuerpo.innerHTML = `${line1}<br><br>${line2}<br><br>${line3}`;
+      preview.firmaDatos.innerHTML = `${nombre.toUpperCase()}<br>${tipoDoc} No. ${docNumero}`;
+      preview.valorLetras.textContent = `Valor en letras: ${valorLetras} PESOS ($${valorNumFmt})`;
+
+      if (uploadedSignature?.dataUrl) {
+        setPreviewSignature(uploadedSignature.dataUrl);
+      } else if (!signaturePad.isEmpty()) {
+        setPreviewSignature(signaturePad.toDataURL('image/png'));
+      } else {
+        setPreviewSignature(null);
+      }
+    }
+
+    function getActiveSignatureData() {
+      if (uploadedSignature?.dataUrl) return uploadedSignature;
+      if (!signaturePad.isEmpty()) {
+        return { dataUrl: signaturePad.toDataURL('image/png'), mime: 'image/png' };
+      }
+      return null;
+    }
+
+    function validateForm() {
+      const requiredFields = [
+        ['empresa', 'Escribe el nombre de la empresa.'],
+        ['nit', 'Escribe el NIT.'],
+        ['nombre', 'Escribe el nombre completo del cobrador.'],
+        ['docNumero', 'Escribe el número de documento.'],
+        ['valor', 'Escribe el valor de la cuenta.'],
+        ['origen', 'Escribe el punto de partida.'],
+        ['destino', 'Escribe el destino.'],
+        ['banco1', 'Escribe el banco o entidad de la primera cuenta.'],
+        ['cuenta1', 'Escribe el número de la primera cuenta.'],
+        ['titular1', 'Escribe el titular de la primera cuenta.'],
+        ['ciudad', 'Escribe la ciudad de expedición.'],
+        ['fecha', 'Selecciona la fecha de expedición.']
+      ];
+
+      const mode = currentMode();
+      if (mode === '2') {
+        requiredFields.push(
+          ['banco2', 'Escribe el banco o entidad de la segunda cuenta.'],
+          ['cuenta2', 'Escribe el número de la segunda cuenta.'],
+          ['titular2', 'Escribe el titular de la segunda cuenta.']
+        );
+      }
+
+      for (const [key, message] of requiredFields) {
+        if (!normalizeText(fields[key].value)) {
+          showError(message);
+          fields[key].focus();
+          return false;
+        }
+      }
+
+      if (Math.trunc(Number(fields.valor.value)) <= 0) {
+        showError('El valor debe ser mayor que cero.');
+        fields.valor.focus();
+        return false;
+      }
+
+      if (!getActiveSignatureData()) {
+        showError('Agrega una firma dibujada o una imagen de firma antes de generar el PDF.');
+        return false;
+      }
+
+      clearError();
+      return true;
+    }
+
+    function makeWrappedText(doc, text, x, y, maxWidth, lineHeight) {
+      const lines = doc.splitTextToSize(text, maxWidth);
+      doc.text(lines, x, y);
+      return y + (lines.length * lineHeight);
+    }
+
+    async function generatePdf() {
+      if (!validateForm()) return;
+
+      const empresa = normalizeText(fields.empresa.value).toUpperCase();
+      const nit = normalizeText(fields.nit.value);
+      const nombre = toTitleCase(fields.nombre.value);
+      const tipoDoc = fields.tipoDoc.value;
+      const docNumero = normalizeText(fields.docNumero.value);
+      const valorNum = Math.trunc(Number(fields.valor.value));
+      const valorNumFmt = formatMoney(valorNum);
+      const valorLetras = moneyToWords(valorNum);
+      const origen = toTitleCase(fields.origen.value);
+      const destino = toTitleCase(fields.destino.value);
+      const cuentaTexto = getCuentaTexto();
+      const ciudad = toTitleCase(fields.ciudad.value);
+      const fechaTexto = formatSpanishDate(fields.fecha.value);
+      const signature = getActiveSignatureData();
+
+      const doc = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const left = 20;
+      const right = 20;
+      const top = 18;
+      const usableWidth = pageWidth - left - right;
+
+      // Encabezado más limpio y con mejor separación
+      doc.setFont('times', 'bold');
+      doc.setFontSize(18);
+      doc.text('CUENTA DE COBRO', pageWidth / 2, top, { align: 'center' });
+
+      let y = 34;
+      doc.setFont('times', 'bold');
+      doc.setFontSize(12.5);
+      doc.text(empresa, pageWidth / 2, y, { align: 'center' });
+      y += 6;
+
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11.5);
+      doc.text(`NIT: ${nit}`, pageWidth / 2, y, { align: 'center' });
+      y += 12;
+
+      doc.setFont('times', 'bold');
+      doc.setFontSize(12);
+      doc.text('DEBE A:', left, y);
+      y += 8;
+
+      doc.setFont('times', 'bold');
+      doc.setFontSize(12.5);
+      doc.text(nombre.toUpperCase(), left, y);
+      y += 7;
+
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11.5);
+      doc.text(`${tipoDoc} No. ${docNumero}`, left, y);
+      y += 12;
+
+      const text1 = `La suma de ${valorLetras} PESOS ($${valorNumFmt}) M/te que corresponden a transporte de carga de ${origen} – ${destino}.`;
+      const text2 = cuentaTexto;
+      const text3 = `Expedida en ${ciudad}, el día ${fechaTexto}.`;
+
+      y = makeWrappedText(doc, text1, left, y, usableWidth, 6.0) + 2;
+      y = makeWrappedText(doc, text2, left, y, usableWidth, 6.0) + 2;
+      y = makeWrappedText(doc, text3, left, y, usableWidth, 6.0) + 10;
+
+      doc.setFont('times', 'normal');
+      doc.text('Atentamente,', left, y);
+      y += 8;
+
+      const sigWidth = 60;
+      const sigHeight = 24;
+      const sigX = left;
+      const sigY = y;
+
+      if (signature) {
+        const imageFormat = signature.mime?.includes('png') ? 'PNG' : 'JPEG';
+        doc.addImage(signature.dataUrl, imageFormat, sigX, sigY, sigWidth, sigHeight);
+      }
+
+      const sigLineY = sigY + sigHeight + 5;
+      doc.setDrawColor(160);
+      doc.setLineWidth(0.2);
+      doc.line(sigX, sigLineY, sigX + 70, sigLineY);
+
+      doc.setFontSize(11);
+      doc.text(nombre, sigX, sigLineY + 6);
+      doc.text(`${tipoDoc} No. ${docNumero}`, sigX, sigLineY + 12);
+
+      doc.save('cuenta_de_cobro.pdf');
+    }
+
+    function loadDefaults() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      fields.fecha.value = `${yyyy}-${mm}-${dd}`;
+
+      fields.empresa.value = '';
+      fields.nit.value = '';
+      fields.nombre.value = '';
+      fields.tipoDoc.value = 'C.C.';
+      fields.docNumero.value = '';
+      fields.valor.value = '';
+      fields.origen.value = '';
+      fields.destino.value = '';
+      fields.banco1.value = '';
+      fields.cuenta1.value = '';
+      fields.titular1.value = '';
+      fields.banco2.value = '';
+      fields.cuenta2.value = '';
+      fields.titular2.value = '';
+      fields.ciudad.value = '';
+
+      updateSecondAccountVisibility();
+      updatePreview();
+    }
+
+    modoCuentaRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        updateSecondAccountVisibility();
+        updatePreview();
+      });
+    });
+
+    Object.values(fields).forEach(el => {
+      if (!el || el === fields.firmaArchivo) return;
+      el.addEventListener('input', updatePreview);
+      el.addEventListener('change', updatePreview);
+    });
+
+    fields.valor.addEventListener('input', () => {
+      const n = Number(fields.valor.value || 0);
+      const letras = n > 0 ? moneyToWords(n) : '';
+      preview.valorLetras.textContent = letras ? `Valor en letras: ${letras} PESOS ($${formatMoney(n)})` : 'Se mostrará en letras automáticamente.';
+      updatePreview();
+    });
+
+    fields.firmaArchivo.addEventListener('change', () => {
+      const file = fields.firmaArchivo.files?.[0];
+      if (!file) {
+        uploadedSignature = null;
+        updatePreview();
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        uploadedSignature = {
+          dataUrl: reader.result,
+          mime: file.type || 'image/png'
+        };
+        updatePreview();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    btnBorrarArchivo.addEventListener('click', () => {
+      fields.firmaArchivo.value = '';
+      uploadedSignature = null;
+      updatePreview();
+    });
+
+    btnLimpiarFirma.addEventListener('click', () => {
+      signaturePad.clear();
+      updatePreview();
+    });
+
+    btnReset.addEventListener('click', () => {
+      form.reset();
+      uploadedSignature = null;
+      signaturePad.clear();
+      loadDefaults();
+      clearError();
+    });
+
+    btnPreview.addEventListener('click', updatePreview);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await generatePdf();
+    });
+
+    window.addEventListener('resize', () => {
+      updatePreview();
+    });
+
+    setTimeout(() => {
+      fitCanvas();
+      loadDefaults();
+      updatePreview();
+    }, 0);
+  </script>
+</body>
+</html>
